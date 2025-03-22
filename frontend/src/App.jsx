@@ -82,7 +82,7 @@ const theme = extendTheme({
 
 // API functions (unchanged)
 const fetchBucketsData = async () => {
-  const response = await fetch("http://localhost:5001/api/buckets");
+  const response = await fetch("/api/buckets");
   if (!response.ok)
     throw new Error(`Failed to fetch buckets: ${response.status}`);
   const data = await response.json();
