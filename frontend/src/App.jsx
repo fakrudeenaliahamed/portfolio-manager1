@@ -90,7 +90,7 @@ const fetchBucketsData = async () => {
 };
 
 const createBucket = async (name) => {
-  const response = await fetch("http://localhost:5001/api/buckets", {
+  const response = await fetch("/api/buckets", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, trades: [] }),
@@ -101,14 +101,11 @@ const createBucket = async (name) => {
 };
 
 const addTrade = async (bucketId, tradeData) => {
-  const response = await fetch(
-    `http://localhost:5001/api/buckets/${bucketId}/trades`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tradeData),
-    }
-  );
+  const response = await fetch(`/api/buckets/${bucketId}/trades`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tradeData),
+  });
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(
@@ -119,14 +116,11 @@ const addTrade = async (bucketId, tradeData) => {
 };
 
 const updateTrade = async (bucketId, tradeId, tradeData) => {
-  const response = await fetch(
-    `http://localhost:5001/api/buckets/${bucketId}/trades/${tradeId}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tradeData),
-    }
-  );
+  const response = await fetch(`/api/buckets/${bucketId}/trades/${tradeId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tradeData),
+  });
   if (!response.ok)
     throw new Error(`Failed to update trade: ${response.status}`);
   return response.json();
