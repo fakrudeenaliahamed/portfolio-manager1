@@ -16,8 +16,6 @@ const __dirname = path.resolve();
 
 console.log(process.env.MONGO_URI); //  process.env.MONGO_URI;
 
-app.get("/", (req, res) => res.send("Hello from Express!"));
-
 app.use("/api/buckets", bucketRoutes);
 
 if (process.env.NODE_ENV === "production") {
