@@ -37,8 +37,7 @@ import {
 import { extendTheme } from "@chakra-ui/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-// Define a custom theme
-// Define a custom theme with tighter spacing
+// Define a custom theme with responsive adjustments
 const theme = extendTheme({
   styles: {
     global: {
@@ -52,37 +51,46 @@ const theme = extendTheme({
   components: {
     Table: {
       baseStyle: {
-        th: { fontSize: "sm", p: 2 }, // Smaller headers
-        td: { fontSize: "sm", p: 2 }, // Smaller cells
+        th: { fontSize: ["xs", "sm"], p: [1, 2] },
+        td: { fontSize: ["xs", "sm"], p: [1, 2] },
       },
     },
     Card: {
       baseStyle: {
-        container: { p: 2, mb: 2 }, // Reduced padding and margin
+        container: { p: [1, 2], mb: [1, 2] },
       },
     },
     Button: {
       baseStyle: {
-        fontSize: "sm", // Smaller buttons
-        p: 2,
+        fontSize: ["xs", "sm"],
+        p: [1, 2],
       },
     },
     Input: {
       baseStyle: {
-        field: { fontSize: "sm", p: 2 }, // Smaller inputs
+        field: { fontSize: ["xs", "sm"], p: [1, 2] },
       },
     },
     Select: {
       baseStyle: {
-        field: { fontSize: "sm", p: 2 }, // Smaller selects
+        field: { fontSize: ["xs", "sm"], p: [1, 2] },
       },
     },
   },
+  breakpoints: {
+    base: "0em", // Mobile (0px)
+    sm: "30em", // Small (480px)
+    md: "48em", // Medium (768px)
+    lg: "62em", // Large (992px)
+    xl: "80em", // Extra large (1280px)
+  },
 });
 
-// API functions (unchanged)
+// API functions with environment variable support
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ""; // Empty for relative URLs
+
 const fetchBucketsData = async () => {
-  const response = await fetch("/api/buckets");
+  const response = await fetch(`${API_BASE_URL}/api/buckets`);
   if (!response.ok)
     throw new Error(`Failed to fetch buckets: ${response.status}`);
   const data = await response.json();
@@ -90,7 +98,7 @@ const fetchBucketsData = async () => {
 };
 
 const createBucket = async (name) => {
-  const response = await fetch("/api/buckets", {
+  const response = await fetch(`${API_BASE_URL}/api/buckets`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, trades: [] }),
@@ -101,11 +109,14 @@ const createBucket = async (name) => {
 };
 
 const addTrade = async (bucketId, tradeData) => {
-  const response = await fetch(`/api/buckets/${bucketId}/trades`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(tradeData),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/buckets/${bucketId}/trades`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tradeData),
+    }
+  );
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(
@@ -116,11 +127,14 @@ const addTrade = async (bucketId, tradeData) => {
 };
 
 const updateTrade = async (bucketId, tradeId, tradeData) => {
-  const response = await fetch(`/api/buckets/${bucketId}/trades/${tradeId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(tradeData),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/buckets/${bucketId}/trades/${tradeId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tradeData),
+    }
+  );
   if (!response.ok)
     throw new Error(`Failed to update trade: ${response.status}`);
   return response.json();
@@ -197,11 +211,11 @@ function BucketTrades({ bucketData, onAddTrade, onUpdateTrade }) {
   const handleUpdateTrade = async () => {
     try {
       const updatedTradeData = {
-        ...editingTrade, // Keep original values for immutable fields
-        ltp: Number(tradeData.ltp), // Allow LTP to be updated
-        status: tradeData.status, // Allow status to be updated
+        ...editingTrade,
+        ltp: Number(tradeData.ltp),
+        status: tradeData.status,
         sellPrice:
-          tradeData.status === "closed" ? Number(tradeData.sellPrice) : null, // Allow sellPrice to be updated
+          tradeData.status === "closed" ? Number(tradeData.sellPrice) : null,
       };
       await onUpdateTrade(bucketData._id, editingTrade._id, updatedTradeData);
       setEditingTrade(null);
@@ -219,82 +233,90 @@ function BucketTrades({ bucketData, onAddTrade, onUpdateTrade }) {
     }
   };
 
-  if (!bucketData) return <Skeleton height="200px" w="100%" />;
+  if (!bucketData) return <Skeleton height={["80px", "100px"]} w="100%" />;
 
   return (
-    <Card w="100%" bg="white" borderRadius="lg" shadow="md" mb={4}>
-      <CardHeader>
+    <Card w="100%" bg="white" borderRadius="md" shadow="sm">
+      <CardHeader p={[1, 2]}>
         <Flex justify="space-between" align="center" w="100%">
           <Button
             variant="ghost"
             onClick={toggleTrades}
-            fontWeight="semibold"
+            fontWeight="medium"
             color="gray.700"
             _hover={{ bg: "gray.100" }}
-            p={2}
+            size="sm"
             w="100%"
+            p={[1, 2]}
+            display="flex"
             justifyContent="space-between"
+            alignItems="center"
           >
-            <Flex align="center">
-              <Heading size="md" mr={4}>
+            <Flex
+              align="center"
+              justify={["center", "flex-start"]}
+              flex="1"
+              direction={["column", "row"]}
+              textAlign={["center", "left"]}
+            >
+              <Heading size={["sm", "md"]} mr={[0, 2]} mb={[1, 0]}>
                 {bucketData.name}
               </Heading>
               <Text
-                fontSize="sm"
+                fontSize={["xs", "sm"]}
                 color={
                   bucketData.totalProfitAndLoss >= 0 ? "green.500" : "red.500"
                 }
               >
-                Total P&L: {bucketData.totalProfitAndLoss.toFixed(2)}
+                P&L: {bucketData.totalProfitAndLoss.toFixed(2)}
               </Text>
             </Flex>
-            {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            <Box flexShrink={0} display="flex" alignItems="center">
+              {isOpen ? (
+                <ChevronUp
+                  size={16}
+                  style={{ width: "16px", height: "16px" }}
+                />
+              ) : (
+                <ChevronDown
+                  size={16}
+                  style={{ width: "16px", height: "16px" }}
+                />
+              )}
+            </Box>
           </Button>
         </Flex>
       </CardHeader>
       <Collapse in={isOpen} animateOpacity>
-        <CardBody w="100%">
-          <Button colorScheme="blue" mb={4} onClick={onTradeOpen}>
+        <CardBody p={[1, 2]}>
+          <Button
+            colorScheme="blue"
+            size="sm"
+            mb={[1, 2]}
+            onClick={onTradeOpen}
+          >
             Add Trade
           </Button>
           {bucketData.trades && bucketData.trades.length > 0 ? (
-            <TableContainer w="100%">
-              <Table variant="striped" size="md" w="100%">
+            <TableContainer w="100%" overflowX="auto">
+              <Table variant="striped" size="sm">
                 <Thead bg="gray.100">
                   <Tr>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Instrument
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Quantity
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Average Price
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Last Traded Price
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Status
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Sell Price
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Profit/Loss
-                    </Th>
-                    <Th scope="col" color="gray.600" fontWeight="medium">
-                      Actions
-                    </Th>
+                    <Th>Instrument</Th>
+                    <Th>Qty</Th>
+                    <Th>Avg</Th>
+                    <Th>LTP</Th>
+                    <Th>Status</Th>
+                    <Th>Sell</Th>
+                    <Th>P&L</Th>
+                    <Th>Actions</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {bucketData.trades.map((trade, index) => (
                     <Tr key={index}>
-                      <Td fontWeight="medium" color="gray.700">
-                        {trade.instrument}
-                      </Td>
-                      <Td color="gray.700">{trade.qty}</Td>
+                      <Td fontWeight="medium">{trade.instrument}</Td>
+                      <Td>{trade.qty}</Td>
                       <Td color="blue.500">{trade.avg.toFixed(2)}</Td>
                       <Td color="green.500">{trade.ltp.toFixed(2)}</Td>
                       <Td>
@@ -303,11 +325,12 @@ function BucketTrades({ bucketData, onAddTrade, onUpdateTrade }) {
                           colorScheme={
                             trade.status === "open" ? "green" : "red"
                           }
+                          fontSize={["xs", "sm"]}
                         >
                           {trade.status}
                         </Badge>
                       </Td>
-                      <Td color="gray.700">
+                      <Td>
                         {trade.sellPrice ? trade.sellPrice.toFixed(2) : "N/A"}
                       </Td>
                       <Td
@@ -319,7 +342,7 @@ function BucketTrades({ bucketData, onAddTrade, onUpdateTrade }) {
                       </Td>
                       <Td>
                         <Button
-                          size="sm"
+                          size="xs"
                           onClick={() => handleEditTrade(trade)}
                         >
                           Edit
@@ -331,61 +354,62 @@ function BucketTrades({ bucketData, onAddTrade, onUpdateTrade }) {
               </Table>
             </TableContainer>
           ) : (
-            <Box p={4} textAlign="center" color="gray.500" w="100%">
-              No trades in this bucket.
+            <Box textAlign="center" color="gray.500" fontSize={["xs", "sm"]}>
+              No trades
             </Box>
           )}
         </CardBody>
       </Collapse>
 
       {/* Trade Modal */}
-      <Modal isOpen={isTradeOpen} onClose={onTradeClose}>
+      <Modal isOpen={isTradeOpen} onClose={onTradeClose} size={["xs", "sm"]}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>{editingTrade ? "Edit Trade" : "Add Trade"}</ModalHeader>
+          <ModalHeader fontSize={["sm", "md"]}>
+            {editingTrade ? "Edit Trade" : "Add Trade"}
+          </ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <FormControl mb={4}>
-              <FormLabel>Instrument</FormLabel>
+          <ModalBody p={[2, 3]}>
+            <FormControl mb={[1, 2]}>
+              <FormLabel fontSize={["xs", "sm"]}>Instrument</FormLabel>
               <Input
                 name="instrument"
                 value={tradeData.instrument}
                 onChange={handleTradeChange}
-                isDisabled={!!editingTrade} // Disabled when editing
+                isDisabled={!!editingTrade}
               />
             </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Quantity</FormLabel>
+            <FormControl mb={[1, 2]}>
+              <FormLabel fontSize={["xs", "sm"]}>Quantity</FormLabel>
               <Input
                 name="qty"
                 type="number"
                 value={tradeData.qty}
                 onChange={handleTradeChange}
-                isDisabled={!!editingTrade} // Disabled when editing
+                isDisabled={!!editingTrade}
               />
             </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Average Price</FormLabel>
+            <FormControl mb={[1, 2]}>
+              <FormLabel fontSize={["xs", "sm"]}>Average Price</FormLabel>
               <Input
                 name="avg"
                 type="number"
                 value={tradeData.avg}
                 onChange={handleTradeChange}
-                isDisabled={!!editingTrade} // Disabled when editing
+                isDisabled={!!editingTrade}
               />
             </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Last Traded Price</FormLabel>
+            <FormControl mb={[1, 2]}>
+              <FormLabel fontSize={["xs", "sm"]}>Last Traded Price</FormLabel>
               <Input
                 name="ltp"
                 type="number"
                 value={tradeData.ltp}
                 onChange={handleTradeChange}
-                // Enabled in both add and edit modes
               />
             </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Status</FormLabel>
+            <FormControl mb={[1, 2]}>
+              <FormLabel fontSize={["xs", "sm"]}>Status</FormLabel>
               <Select
                 name="status"
                 value={tradeData.status}
@@ -395,26 +419,27 @@ function BucketTrades({ bucketData, onAddTrade, onUpdateTrade }) {
                 <option value="closed">Closed</option>
               </Select>
             </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Sell Price</FormLabel>
+            <FormControl mb={[1, 2]}>
+              <FormLabel fontSize={["xs", "sm"]}>Sell Price</FormLabel>
               <Input
                 name="sellPrice"
                 type="number"
                 value={tradeData.sellPrice || ""}
                 onChange={handleTradeChange}
-                isDisabled={tradeData.status === "open"} // Disabled if status is open
+                isDisabled={tradeData.status === "open"}
               />
             </FormControl>
           </ModalBody>
-          <ModalFooter>
+          <ModalFooter p={[1, 2]}>
             <Button
               colorScheme="blue"
-              mr={3}
+              size="sm"
+              mr={[1, 2]}
               onClick={editingTrade ? handleUpdateTrade : handleAddTrade}
             >
               {editingTrade ? "Update" : "Add"}
             </Button>
-            <Button variant="ghost" onClick={onTradeClose}>
+            <Button variant="ghost" size="sm" onClick={onTradeClose}>
               Cancel
             </Button>
           </ModalFooter>
@@ -474,42 +499,42 @@ function App() {
     <ChakraProvider theme={theme}>
       <Flex
         direction="column"
-        align="flex-start"
+        align="center"
         justify="flex-start"
         minHeight="100vh"
         w="100vw"
-        pt={8}
-        pb={8}
-        px={0}
+        pt={[2, 4]}
+        pb={[2, 4]}
+        px={[1, 2]}
       >
-        <Heading mb={4} textAlign="center" w="100%">
+        <Heading size={["md", "lg"]} mb={[1, 2]} textAlign="center" w="100%">
           My Trades
         </Heading>
-        <Button colorScheme="teal" mb={4} mx="auto" onClick={onOpen}>
+        <Button colorScheme="teal" size="sm" mb={[1, 2]} onClick={onOpen}>
           Add Bucket
         </Button>
         {loading ? (
           <Box w="100%">
-            <Skeleton height="200px" w="100%" />
+            <Skeleton height={["80px", "100px"]} w="100%" />
           </Box>
         ) : error ? (
-          <Alert status="error" w="100%">
-            <AlertIcon />
+          <Alert status="error" w="100%" fontSize={["xs", "sm"]} p={[1, 2]}>
+            <AlertIcon boxSize={[3, 4]} />
             <Box>
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle fontSize={["xs", "sm"]}>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Box>
           </Alert>
         ) : !bucketsData || bucketsData.length === 0 ? (
-          <Alert status="warning" w="100%">
-            <AlertIcon />
+          <Alert status="warning" w="100%" fontSize={["xs", "sm"]} p={[1, 2]}>
+            <AlertIcon boxSize={[3, 4]} />
             <Box>
-              <AlertTitle>No Data</AlertTitle>
-              <AlertDescription>No bucket data available.</AlertDescription>
+              <AlertTitle fontSize={["xs", "sm"]}>No Data</AlertTitle>
+              <AlertDescription>No buckets available.</AlertDescription>
             </Box>
           </Alert>
         ) : (
-          <Box w="100%">
+          <Box w={["100%", "90%", "80%"]} maxW="1200px">
             {bucketsData.map((bucket) => (
               <BucketTrades
                 key={bucket._id}
@@ -523,25 +548,30 @@ function App() {
       </Flex>
 
       {/* Add Bucket Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} size={["xs", "sm"]}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add New Bucket</ModalHeader>
+          <ModalHeader fontSize={["sm", "md"]}>Add New Bucket</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
+          <ModalBody p={[2, 3]}>
             <FormControl>
-              <FormLabel>Bucket Name</FormLabel>
+              <FormLabel fontSize={["xs", "sm"]}>Bucket Name</FormLabel>
               <Input
                 value={newBucketName}
                 onChange={(e) => setNewBucketName(e.target.value)}
               />
             </FormControl>
           </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleCreateBucket}>
+          <ModalFooter p={[1, 2]}>
+            <Button
+              colorScheme="teal"
+              size="sm"
+              mr={[1, 2]}
+              onClick={handleCreateBucket}
+            >
               Create
             </Button>
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               Cancel
             </Button>
           </ModalFooter>
