@@ -28,7 +28,6 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 app.use((req, res, next) => {
-  console.log("Entering ClerkExpressWithAuth");
   const clerkMiddleware = ClerkExpressWithAuth({
     onError: (err) => {
       console.error("Clerk Auth Error:", err.message);
@@ -41,7 +40,6 @@ app.use((req, res, next) => {
         .status(500)
         .json({ error: "Auth middleware failed", details: err.message });
     }
-    console.log("Exiting ClerkExpressWithAuth, req.auth:", req.auth);
     next(); // Ensure next() is always called
   });
 });
