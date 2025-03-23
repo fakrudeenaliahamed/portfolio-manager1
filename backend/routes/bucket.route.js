@@ -1,6 +1,7 @@
 import express from "express";
 import Bucket from "../models/bucket.model.js";
 import Trading from "../models/trading.model.js";
+import { protectRoute } from "../middleware/auth.middleware.js";
 
 // Router for bucket routes
 const bucketRouter = express.Router();
@@ -41,7 +42,7 @@ const validateTradeData = (trade) => {
 };
 
 // POST endpoint to create a new bucket
-bucketRouter.post("/", async (req, res) => {
+bucketRouter.post("/", protectRoute, async (req, res) => {
   try {
     const { name, trades = [] } = req.body;
 
@@ -89,7 +90,7 @@ bucketRouter.post("/", async (req, res) => {
 });
 
 // POST endpoint to add a trade to an existing bucket
-bucketRouter.post("/:bucketId/trades", async (req, res) => {
+bucketRouter.post("/:bucketId/trades", protectRoute, async (req, res) => {
   try {
     const { bucketId } = req.params;
     const tradeData = req.body;
@@ -137,7 +138,7 @@ bucketRouter.post("/:bucketId/trades", async (req, res) => {
 });
 
 // GET endpoint to retrieve all buckets
-bucketRouter.get("/", async (req, res) => {
+bucketRouter.get("/", protectRoute, async (req, res) => {
   try {
     // Fetch all buckets from the database
     const buckets = await Bucket.find();
@@ -164,36 +165,41 @@ bucketRouter.get("/", async (req, res) => {
   }
 });
 
-bucketRouter.put("/:bucketId/trades/:tradeId", async (req, res) => {
-  try {
-    const { bucketId, tradeId } = req.params;
-    const tradeData = req.body;
+bucketRouter.put(
+  "/:bucketId/trades/:tradeId",
+  protectRoute,
+  async (req, res) => {
+    try {
+      const { bucketId, tradeId } = req.params;
+      const tradeData = req.body;
 
-    const bucket = await Bucket.findById(bucketId);
-    if (!bucket) {
-      return res.status(404).json({ message: "Bucket not found" });
+      const bucket = await Bucket.findById(bucketId);
+      if (!bucket) {
+        return res.status(404).json({ message: "Bucket not found" });
+      }
+
+      const trade = bucket.trades.id(tradeId);
+      if (!trade) {
+        return res.status(404).json({ message: "Trade not found" });
+      }
+
+      trade.instrument = tradeData.instrument;
+      trade.qty = tradeData.qty;
+      trade.avg = tradeData.avg;
+      trade.ltp = tradeData.ltp;
+      trade.status = tradeData.status;
+      trade.sellPrice =
+        tradeData.status === "open" ? null : tradeData.sellPrice;
+
+      const updatedBucket = await bucket.save();
+      res
+        .status(200)
+        .json({ message: "Trade updated successfully", bucket: updatedBucket });
+    } catch (error) {
+      res
+        .status(400)
+        .json({ message: "Error updating trade", error: error.message });
     }
-
-    const trade = bucket.trades.id(tradeId);
-    if (!trade) {
-      return res.status(404).json({ message: "Trade not found" });
-    }
-
-    trade.instrument = tradeData.instrument;
-    trade.qty = tradeData.qty;
-    trade.avg = tradeData.avg;
-    trade.ltp = tradeData.ltp;
-    trade.status = tradeData.status;
-    trade.sellPrice = tradeData.status === "open" ? null : tradeData.sellPrice;
-
-    const updatedBucket = await bucket.save();
-    res
-      .status(200)
-      .json({ message: "Trade updated successfully", bucket: updatedBucket });
-  } catch (error) {
-    res
-      .status(400)
-      .json({ message: "Error updating trade", error: error.message });
   }
-});
+);
 export default bucketRouter;

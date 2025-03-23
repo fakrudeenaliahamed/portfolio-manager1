@@ -5,14 +5,46 @@ import { connectDB } from "./config/db.js";
 import bucketRoutes from "./routes/bucket.route.js";
 import cors from "cors";
 import path from "path";
+import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 
 const app = express();
 
 app.use(express.json());
 
+// Middleware to protect routes
+
 dotenv.config();
 
 const __dirname = path.resolve();
+
+if (process.env.NODE_ENV === "development") {
+  app.use(
+    cors({
+      origin: "http://localhost:5173", // Allow requests from React app
+      methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+      allowedHeaders: ["Content-Type"], // Allowed headers
+      credentials: true, // Enable credentials
+    })
+  );
+}
+app.use((req, res, next) => {
+  console.log("Entering ClerkExpressWithAuth");
+  const clerkMiddleware = ClerkExpressWithAuth({
+    onError: (err) => {
+      console.error("Clerk Auth Error:", err.message);
+    },
+  });
+  clerkMiddleware(req, res, (err) => {
+    if (err) {
+      console.error("Clerk Middleware Failed:", err.message);
+      return res
+        .status(500)
+        .json({ error: "Auth middleware failed", details: err.message });
+    }
+    console.log("Exiting ClerkExpressWithAuth, req.auth:", req.auth);
+    next(); // Ensure next() is always called
+  });
+});
 
 console.log(process.env.MONGO_URI); //  process.env.MONGO_URI;
 
@@ -24,14 +56,6 @@ if (process.env.NODE_ENV === "production") {
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
   });
-} else {
-  app.use(
-    cors({
-      origin: "http://localhost:5173", // Allow requests from React app
-      methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
-      allowedHeaders: ["Content-Type"], // Allowed headers
-    })
-  );
 }
 
 app.listen(process.env.PORT, () => {
