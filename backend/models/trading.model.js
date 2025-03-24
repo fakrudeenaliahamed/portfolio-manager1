@@ -48,13 +48,16 @@ tradingSchema.pre("save", function (next) {
     this.profitAndLoss =
       this.qty > 0
         ? (this.ltp - this.avg) * this.qty
-        : (this.avg - this.ltp) * this.qty;
+        : -(this.ltp - this.avg) * this.qty;
   } else if (this.status === "closed") {
     if (this.sellPrice === null) {
       return next(new Error("sellPrice is required for closed positions"));
     }
     // For closed positions: P&L = (Sell Price - Avg) * Qty (for long) or (Avg - Sell Price) * Qty (for short)
-    this.profitAndLoss = (this.sellPrice - this.avg) * this.qty;
+    this.profitAndLoss =
+      this.qty > 0
+        ? (this.sellPrice - this.avg) * this.qty
+        : -(this.sellPrice - this.avg) * this.qty;
   }
 
   next();
