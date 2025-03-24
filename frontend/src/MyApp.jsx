@@ -28,6 +28,7 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
+  SignOutButton,
   ClerkProvider,
 } from "@clerk/clerk-react";
 
@@ -194,9 +195,19 @@ function MyApp() {
         pb={[2, 4]}
         px={[1, 2]}
       >
-        <Heading size={["md", "lg"]} mb={[1, 2]} textAlign="center" w="100%">
-          Welcome to My Trades <UserButton />
+        <Heading size={["md", "lg"]} mb={[1, 2]} textAlign="center" w="100vw">
+          Welcome to My Trades <UserButton />{" "}
         </Heading>
+        <SignOutButton>
+          <Button
+            colorScheme="red"
+            position="absolute"
+            top={[2, 4]} // Match padding-top of Flex
+            right={[1, 2]} // Match padding-x of Flex
+          >
+            Logout
+          </Button>
+        </SignOutButton>
         <Button colorScheme="teal" size="sm" mb={[1, 2]} onClick={onOpen}>
           Add Bucket
         </Button>
