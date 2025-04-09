@@ -57,7 +57,7 @@ tradingSchema.pre("save", function (next) {
     this.profitAndLoss =
       this.qty > 0
         ? (this.sellPrice - this.avg) * this.qty
-        : -(this.avg - this.ltp) * -this.qty;
+        : -(this.avg - this.sellPrice) * -this.qty;
   }
 
   next();
